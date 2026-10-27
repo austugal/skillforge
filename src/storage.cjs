@@ -4,11 +4,19 @@ const path = require('node:path');
 const {randomUUID} = require('node:crypto');
 const {normalize, exportFiles, slug} = require('./core.cjs');
 class Store {
-  constructor(root) { this.root = root; }
+  constructor(root) { this.root = root; this.pending = Promise.resolve(); }
   async init() { await fs.mkdir(this.root, {recursive: true, mode: 0o700}); }
-  async save(input) {
-    const s = normalize(input); await this.init();
-    const revision = `${Date.now()}-${randomUUID()}`;
+  save(input) {
+    const snapshot = normalize(input);
+    const task = this.pending.then(() => this.saveSnapshot(snapshot));
+    this.pending = task.catch(() => {});
+    return task;
+  }
+  async saveSnapshot(s) {
+    await this.init();
+    const history = await this.history(s.id);
+    const previous = history.length ? Number(history[0].split('-')[0]) : 0;
+    const revision = `${Math.max(Date.now(), previous + 1)}-${randomUUID()}`;
     const dir = path.join(this.root, s.id); await fs.mkdir(dir, {recursive: true, mode: 0o700});
     await fs.writeFile(path.join(dir, `${revision}.json`), JSON.stringify(s, null, 2), {mode: 0o600, flag: 'wx'});
     return {id: s.id, revision};

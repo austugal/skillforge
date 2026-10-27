@@ -60,3 +60,13 @@ test('local analysis rejects HTTP errors, invalid models, malformed responses an
   await assert.rejects(()=>analyze(ready(),'local',async()=>new Response('x'.repeat(1000001))),/too large/);
 });
 test('compare identifies meaningful workflow changes', () => {const a=ready(),b=ready(); b.steps[0].action='Changed'; assert.deepEqual(C.compare(a,b),['steps']);});
+test('rapid concurrent saves retain request order even when the clock does not advance', async t=>{
+ const dir=await mkdtemp(path.join(os.tmpdir(),'sf-clock-'));t.after(()=>rm(dir,{recursive:true,force:true}));
+ t.mock.method(Date,'now',()=>1800000000000);
+ const store=new Store(dir), s=ready(), tasks=[];
+ for(let i=0;i<5;i++){s.title=`Revision ${i}`;tasks.push(store.save(s));}
+ await Promise.all(tasks);
+ const history=await store.history(s.id);assert.equal(history.length,5);
+ assert.deepEqual(await Promise.all(history.map(async r=>(await store.load(s.id,r)).title)),['Revision 4','Revision 3','Revision 2','Revision 1','Revision 0']);
+ const reopened=new Store(dir);s.title='After restart';await reopened.save(s);assert.equal((await reopened.load(s.id)).title,'After restart');
+});

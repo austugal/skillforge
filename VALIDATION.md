@@ -4,7 +4,7 @@ Automated tests cover workflow validation/export, common text redaction, URL scr
 
 ## Verified in the build environment
 
-- 13 automated domain and extension tests passed.
+- 14 automated domain and extension tests passed.
 - JavaScript syntax checks passed.
 - Electron UI integration passed using isolated temporary storage and mocked OS dialogs: authoring, review, exact export content, approval invalidation, untrusted text rendering and layout at 1,000 px width.
 - Synthetic video through the real MediaRecorder and IPC file path passed start, pause/resume and WebM disk storage. This does not prove native screen or microphone capture.
@@ -40,3 +40,5 @@ Record the OS, CPU architecture, app version and actual result for each check. D
 ## Evidence discipline
 
 A recorded action is an observation, not a proven reusable procedure. A reviewed export is a complete draft, not a successful replay. Add real execution results before relying on it in operational systems.
+
+A macOS CI failure exposed equal-millisecond revision ordering. Version 0.2.1 serializes saves and assigns monotonically increasing revision timestamps; a frozen-clock concurrent-save regression test covers this case.
