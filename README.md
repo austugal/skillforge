@@ -6,6 +6,8 @@ SkillForge is a local-first desktop workflow recorder and skill authoring studio
 
 This is an independently implemented **v0.1 developer preview**, inspired by the record-to-skill idea in [Microsoft Skill Recorder](https://github.com/microsoft/skill-recorder). It is not a Microsoft product, a fork, or a benchmarked “10× better” claim. No upstream code is bundled.
 
+![SkillForge desktop studio](docs/studio.png)
+
 ## What works
 
 - **Screen or window recording:** explicit source selection, optional microphone, pause/resume, local WebM storage. No global keyboard, clipboard or terminal hooks.

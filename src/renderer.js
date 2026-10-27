@@ -1,6 +1,6 @@
 'use strict';
 const C = window.SkillForge, api = window.desktop, $ = id => document.getElementById(id);
-let current = fresh(), recorder = null, stream = null, recordingState = 'idle', timer = null, elapsed = 0, started = 0, chunkQueue = Promise.resolve(), chunkError = null, previewUrl = null;
+let current = fresh(), recorder = null, stream = null, recordingState = 'idle', timer = null, elapsed = 0, started = 0, chunkQueue = Promise.resolve(), chunkError = null;
 function fresh() {return C.normalize({id: `session-${crypto.randomUUID()}`, title: '', events: [], steps: []});}
 function el(tag, options = {}, children = []) {const n = document.createElement(tag); for (const [k, v] of Object.entries(options)) {if (k === 'text') n.textContent = v; else if (k === 'class') n.className = v; else if (k.startsWith('on')) n.addEventListener(k.slice(2), v); else if (k === 'checked' || k === 'disabled') n[k] = v; else n.setAttribute(k, v);} for (const child of children) n.append(child); return n;}
 function message(text, error = false) {$('notice').textContent = text; $('notice').style.color = error ? '#ffb2aa' : '';}
@@ -122,7 +122,7 @@ async function startRecording() {
 }
 for (const n of document.querySelectorAll('[data-tab]')) n.addEventListener('click', () => tab(n.dataset.tab));
 for (const id of ['title','description','preconditions']) $(id).addEventListener('input', () => {current[id] = $(id).value; current.steps.forEach(x => x.approved = false); changed(); renderSteps();});
-$('new').onclick = run(async () => {if (api) await api.save(current); current = fresh(); elapsed = 0; $('timer').textContent = '00:00'; render(); tab('capture'); await renderSessions(); message('New local workflow.');});
+$('new').onclick = run(async () => {if (api) await api.save(current); current = fresh(); elapsed = 0; $('timer').textContent = '00:00'; $('record-state').textContent = 'READY'; render(); tab('capture'); await renderSessions(); message('New local workflow.');});
 $('save').onclick = run(async () => {await api.save(current); await renderSessions(); message('Revision saved.');});
 $('backup').onclick = run(async () => {message(await api.backup(current) ? 'Session JSON saved. Recording is separate.' : 'Backup cancelled.');});
 $('import').onclick = run(async () => {const incoming = await api.import(); if (!incoming) return; await api.save(current); current = C.normalize({...incoming, approved: false, steps: incoming.steps.map(x => ({...x, approved:false}))}); render(); tab('capture'); message('Imported a new session. Pattern-based redaction applied; inspect the evidence.');});
