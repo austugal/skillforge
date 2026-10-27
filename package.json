@@ -1,0 +1,54 @@
+{
+  "name": "skillforge-studio",
+  "version": "0.1.0",
+  "description": "Local-first workflow recording and portable agent skill authoring",
+  "author": "Tiago Fitas",
+  "license": "MIT",
+  "main": "src/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/*.test.cjs",
+    "check": "node scripts/check.cjs",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "cli": "node src/cli.cjs",
+    "test:ui": "node test/ui.cjs"
+  },
+  "devDependencies": {
+    "electron": "45.1.0",
+    "electron-builder": "26.18.0",
+    "playwright": "1.64.1"
+  },
+  "build": {
+    "appId": "com.tiagofitas.skillforge",
+    "productName": "SkillForge",
+    "files": [
+      "src/**/*",
+      "package.json",
+      "LICENSE"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "Record optional narration for your workflow.",
+        "NSScreenCaptureUsageDescription": "Record a screen or window you explicitly select."
+      }
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ]
+    }
+  }
+}

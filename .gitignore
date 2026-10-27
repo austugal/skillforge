@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.webm
+*.log
+.DS_Store
+sessions/
+.env*
+test-results/

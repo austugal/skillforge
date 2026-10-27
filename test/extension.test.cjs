@@ -1,0 +1,20 @@
+'use strict';
+const {test} = require('node:test');
+const assert = require('node:assert/strict');
+const vm = require('node:vm');
+const fs = require('node:fs');
+const {randomUUID} = require('node:crypto');
+test('extension capture is opt-in, tab-bound, strips query data and stops cleanly', async()=>{
+  let handler, capture;
+  const chrome={runtime:{onMessage:{addListener:fn=>handler=fn},getURL:p=>`chrome-extension://test/${p}`}, storage:{session:{get:async()=>({capture}),set:async value=>{capture=value.capture;},remove:async()=>{capture=undefined;}}}, tabs:{query:async()=>[{id:7,url:'https://example.com/path?token=secret#frag'}]},scripting:{executeScript:async()=>{}}};
+  vm.runInNewContext(fs.readFileSync('extension/background.js','utf8'),{chrome,URL,crypto:{randomUUID}});
+  const popup={url:'chrome-extension://test/popup.html'};
+  const send=(message,sender)=>new Promise(resolve=>handler(message,sender,resolve));
+  await send({type:'event',text:'Click before start'},{tab:{id:7},frameId:0,url:'https://example.com'}); assert.equal(capture,undefined);
+  assert.equal((await send({type:'start'},popup)).ok,true); assert.equal(capture.events.length,1); assert.equal(capture.events[0].url,'https://example.com/path');
+  await send({type:'event',text:'Other tab'},{tab:{id:8},frameId:0,url:'https://example.com'}); assert.equal(capture.events.length,1);
+  await send({type:'event',text:'Subframe'},{tab:{id:7},frameId:1,url:'https://example.com'}); assert.equal(capture.events.length,1);
+  await send({type:'event',text:'Click report'},{tab:{id:7},frameId:0,url:'https://example.com/reports?password=secret'}); assert.equal(capture.events.length,2); assert.equal(capture.events[1].url,'https://example.com/reports');
+  const result=await send({type:'stop'},popup); assert.equal(result.session.events.length,2); assert.equal(capture,undefined);
+  await send({type:'event',text:'After stop'},{tab:{id:7},frameId:0,url:'https://example.com'}); assert.equal(capture,undefined);
+});
