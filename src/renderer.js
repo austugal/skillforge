@@ -12,12 +12,12 @@ function time(ms) {return `${String(Math.floor(ms / 60000)).padStart(2,'0')}:${S
 function tab(name) {document.querySelectorAll('.panel').forEach(n => n.classList.toggle('active', n.id === name)); document.querySelectorAll('[data-tab]').forEach(n => n.classList.toggle('active', n.dataset.tab === name)); if (name === 'history') run(renderHistory)(); updateReview();}
 function render() {
   for (const id of ['title', 'description', 'preconditions']) $(id).value = current[id];
-  renderTimeline(); renderParameters(); renderSteps(); updateReview();
+  renderTimeline(); renderFrames(); renderParameters(); renderSteps(); updateReview();
 }
 function renderTimeline() {
   $('event-count').textContent = `${current.events.length} EVENTS`;
   const nodes = current.events.map((e, i) => el('div', {class: 'event'}, [el('time', {text: time(e.at)}), el('span', {text: e.type, class: 'kind'}), el('div', {text: `${e.text}${e.url ? ` · ${e.url}` : ''}`}), button('×', () => {
-    current.events.splice(i, 1); current.steps.forEach(s => {s.evidence = s.evidence.filter(id => id !== e.id); s.approved = false;}); changed(); renderTimeline();
+    current.events.splice(i, 1); current.steps.forEach(s => {s.evidence = s.evidence.filter(id => id !== e.id); s.approved = false;}); changed(); renderTimeline(); renderFrames();
   })]));
   $('timeline').replaceChildren(...(nodes.length ? nodes : [el('div', {class: 'empty', text: 'Your actions and observations will appear here. Add notes or import browser evidence.'})]));
 }
@@ -66,7 +66,7 @@ async function renderSessions() {
   const sessions = await api.list();
   $('sessions').replaceChildren(...sessions.map(s => el('button', {class: `session-item ${s.id === current.id ? 'selected' : ''}`, onclick: run(async () => {
     if (recordingState !== 'idle') throw Error('Finish recording before changing sessions.');
-    await api.save(current); current = await api.load(s.id); render(); await renderSessions(); message('Session loaded. Previous work saved as a revision.');
+    await api.save(current); clearReviewVideo(); current = await api.load(s.id); render(); await renderSessions(); message('Session loaded. Previous work saved as a revision.');
   })}, [document.createTextNode(s.title || 'Untitled workflow'), el('small', {text: `${s.steps} steps · ${s.createdAt.slice(0,10)}`})])));
 }
 async function renderHistory() {
@@ -122,11 +122,11 @@ async function startRecording() {
 }
 for (const n of document.querySelectorAll('[data-tab]')) n.addEventListener('click', () => tab(n.dataset.tab));
 for (const id of ['title','description','preconditions']) $(id).addEventListener('input', () => {current[id] = $(id).value; current.steps.forEach(x => x.approved = false); changed(); renderSteps();});
-$('new').onclick = run(async () => {if (api) await api.save(current); current = fresh(); elapsed = 0; $('timer').textContent = '00:00'; $('record-state').textContent = 'READY'; render(); tab('capture'); await renderSessions(); message('New local workflow.');});
+$('new').onclick = run(async () => {if (api) await api.save(current); clearReviewVideo(); current = fresh(); elapsed = 0; $('timer').textContent = '00:00'; $('record-state').textContent = 'READY'; render(); tab('capture'); await renderSessions(); message('New local workflow.');});
 $('save').onclick = run(async () => {await api.save(current); await renderSessions(); message('Revision saved.');});
 $('backup').onclick = run(async () => {message(await api.backup(current) ? 'Session JSON saved. Recording is separate.' : 'Backup cancelled.');});
-$('import').onclick = run(async () => {const incoming = await api.import(); if (!incoming) return; await api.save(current); current = C.normalize({...incoming, approved: false, steps: incoming.steps.map(x => ({...x, approved:false}))}); render(); tab('capture'); message('Imported a new session. Pattern-based redaction applied; inspect the evidence.');});
-$('delete').onclick = run(async () => {if (await api.delete(current.id)) {current = fresh(); render(); await renderSessions(); message('Session deleted.');}});
+$('import').onclick = run(async () => {const incoming = await api.import(); if (!incoming) return; await api.save(current); clearReviewVideo(); current = C.normalize({...incoming, approved: false, steps: incoming.steps.map(x => ({...x, approved:false}))}); render(); tab('capture'); message('Imported a new session. Pattern-based redaction applied; inspect the evidence.');});
+$('delete').onclick = run(async () => {if (await api.delete(current.id)) {clearReviewVideo(); current = fresh(); render(); await renderSessions(); message('Session deleted.');}});
 $('refresh').onclick = run(sources);
 $('record').onclick = run(startRecording);
 $('pause').onclick = run(() => {if (recordingState === 'recording') {recorder.pause(); elapsed += Date.now() - started; recordingState = 'paused'; addEvent('pause','Recording paused'); $('pause').textContent = 'Resume'; $('record-state').textContent = 'PAUSED';} else if (recordingState === 'paused') {recorder.resume(); started = Date.now(); recordingState = 'recording'; addEvent('resume','Recording resumed'); $('pause').textContent = 'Pause'; $('record-state').textContent = 'RECORDING';}});
@@ -140,7 +140,7 @@ $('add-parameter').onclick = () => {current.parameters.push({name:'', descriptio
 $('analyze').onclick = run(async () => {
   $('analyze').disabled = true; message('Local model is analysing text evidence. This can take up to two minutes.');
   const snapshot = JSON.stringify(current);
-  try {await api.save(current); const result = await api.analyze(current, $('model').value); if (JSON.stringify(current) !== snapshot) throw Error('The workflow changed during analysis. Suggestions were not applied; retry on the latest version.'); current = result; render(); message('Local AI suggestions ready. Review each step against the evidence.');}
+  try {await api.save(current); const result = await api.analyze(current, $('model').value, $('visual-analysis').checked); if (JSON.stringify(current) !== snapshot) throw Error('The workflow changed during analysis. Suggestions were not applied; retry on the latest version.'); current = result; render(); message('Local AI suggestions ready. Review each step against the evidence.');}
   finally {$('analyze').disabled = false;}
 });
 $('approved').onchange = () => {current.approved = $('approved').checked; updateReview();};
@@ -149,3 +149,46 @@ $('export-button').onclick = run(async () => {const location = await api.export(
 $('copy').onclick = run(async () => {await navigator.clipboard.writeText($('skill-preview').textContent); message('Exact skill preview copied.');});
 render();
 if (api) run(async () => {await renderSessions(); await sources();})(); else message('Desktop bridge unavailable. Launch this application with npm start.', true);
+
+let reviewUrl = null;
+function clearReviewVideo() {
+  $('review-video').pause(); $('review-video').removeAttribute('src'); $('review-video').load();
+  if(reviewUrl) URL.revokeObjectURL(reviewUrl); reviewUrl=null; $('review-file').value=''; $('visual-analysis').checked=false;
+}
+$('review-file').onchange = run(() => {
+  const file=$('review-file').files[0]; if(!file)return;
+  if(file.size>500_000_000) throw Error('Review supports videos up to 500 MB.');
+  if(reviewUrl)URL.revokeObjectURL(reviewUrl); reviewUrl=URL.createObjectURL(file); $('review-video').src=reviewUrl;
+});
+$('capture-frame').onclick = run(async () => {
+  const video=$('review-video');
+  if(!video.videoWidth || video.readyState<2) throw Error('Load a video and seek to a frame first.');
+  if(current.events.length>=2000)throw Error('Evidence limit reached.');
+  video.pause(); const at=Math.round(video.currentTime*1000), id=current.id;
+  const canvas=document.createElement('canvas'); canvas.width=Math.min(1280,video.videoWidth); canvas.height=Math.round(video.videoHeight*canvas.width/video.videoWidth);
+  canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
+  const frame=await api.frameSave(id,canvas.toDataURL('image/jpeg',0.8));
+  if(current.id!==id) return;
+  current.events.push({id:`event-${crypto.randomUUID()}`,type:'frame',at,text:`Video observation at ${time(at)}`,url:'',frame,imageApproved:false});
+  changed(); renderTimeline(); renderFrames(); await api.save(current); message('Frame saved locally. Inspect it before allowing visual analysis.');
+});
+function renderFrames() {
+  const host=$('frames'); host.replaceChildren();
+  for(const event of current.events.filter(e=>e.frame)) {
+    const card=el('div',{class:'frame-card'}), img=el('img',{alt:`Recorded frame at ${time(event.at)}`});
+    const check=el('input',{type:'checkbox',checked:event.imageApproved});
+    check.onchange=()=>{event.imageApproved=check.checked;changed();};
+    card.append(img,el('label',{class:'checkbox'},[check,document.createTextNode(`${time(event.at)} · Reviewed for local AI`)]));host.append(card);
+    api.frameRead(current.id,event.frame).then(data=>{if(card.isConnected)img.src=data;}).catch(()=>{check.disabled=true;event.imageApproved=false;card.append(el('p',{text:'Frame file unavailable. Import JSON does not include images.'}));});
+  }
+}
+
+$('transcript-file').onchange = run(async () => {
+ const file=$('transcript-file').files[0]; if(!file)return;
+ if(file.size>500000)throw Error('Transcript limit is 500 KB.');
+ const id=current.id, cues=window.SkillForgeTranscript.parseTranscript(await file.text());
+ if(current.id!==id)throw Error('Session changed during import.');
+ if(current.events.length+cues.length>2000)throw Error('Import exceeds the 2,000-event limit.');
+ for(const cue of cues)current.events.push({id:`event-${crypto.randomUUID()}`,at:cue.at,type:'note',text:C.redact(cue.text),url:''});
+ current.events.sort((a,b)=>a.at-b.at); changed();renderTimeline();await api.save(current);$('transcript-file').value='';message(`Imported ${cues.length} transcript cues. Review the text evidence.`);
+});

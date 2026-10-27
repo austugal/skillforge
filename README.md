@@ -4,9 +4,17 @@
 
 SkillForge is a local-first desktop workflow recorder and skill authoring studio by Tiago Fitas. It records a selected screen or window, keeps timestamped evidence, and helps you turn that evidence into an editable, reviewed agent skill.
 
-This is an independently implemented **v0.1 developer preview**, inspired by the record-to-skill idea in [Microsoft Skill Recorder](https://github.com/microsoft/skill-recorder). It is not a Microsoft product, a fork, or a benchmarked “10× better” claim. No upstream code is bundled.
+This is an independently implemented **v0.2 developer preview**, inspired by the record-to-skill idea in [Microsoft Skill Recorder](https://github.com/microsoft/skill-recorder). It is not a Microsoft product, a fork, or a benchmarked “10× better” claim. No upstream code is bundled.
 
 ![SkillForge desktop studio](docs/studio.png)
+
+## New in 0.2
+
+- Review WebM/MP4 recordings locally, pause/seek and save timestamped JPEG frames.
+- Inspect each frame and select which images a local vision model may receive. Text-only analysis stays the default; visual requests require the additional checkbox and a vision-capable installed Ollama model.
+- Combine selected images (maximum 12 per request) with timestamped notes and click evidence. Generated steps must reference existing evidence and remain unapproved.
+- Import existing SRT/WebVTT narration transcripts into the evidence timeline. This imports text; it does not perform speech recognition.
+- Image files are session-local and are excluded from skill exports and JSON backups. Imported JSON cannot reuse local image references or image permissions.
 
 ## What works
 
@@ -41,7 +49,7 @@ npm test
 npm run dist -- --win
 ```
 
-The manual **Build desktop packages** GitHub Actions workflow builds unsigned Windows, macOS and Linux artifacts. It does not publish a release. Unsigned builds may show OS trust prompts. Production signing and update delivery are not implemented.
+The **Build desktop packages** GitHub Actions workflow runs manually or when the package manifest changes on main and builds unsigned Windows, macOS and Linux artifacts. It does not publish a release. Unsigned builds may show OS trust prompts. Production signing and update delivery are not implemented.
 
 ## First workflow
 
@@ -65,14 +73,14 @@ Capture is opt-in and limited to the injected document in the selected tab. It r
 
 Install [Ollama](https://ollama.com/), download a local model (for example `ollama pull qwen2.5:7b`), and keep Ollama running. Enter its installed model name in the editor and select **Suggest steps**.
 
-The application posts redacted text evidence only to `http://127.0.0.1:11434/api/chat`, without redirects. It does not send video/audio, connect directly to a cloud model, install models or execute generated actions. Your Ollama configuration controls how the named model runs; choose a local model if you require offline processing. Model suggestions remain unapproved and must cite existing event IDs.
+The application posts redacted text evidence, plus explicitly selected images when visual analysis is enabled, to `http://127.0.0.1:11434/api/chat`, without redirects. It does not send full video/audio, connect directly to a cloud model, install models or execute generated actions. Your Ollama configuration controls how the named model runs; choose a local model if you require offline processing. Model suggestions remain unapproved and must cite existing event IDs.
 
 ## Privacy and limitations
 
 - Sessions, revisions and recordings live under Electron's per-user application data directory (`SkillForge`/`skillforge-studio`, depending on platform). They are ordinary local files, **not encrypted by the app**.
 - Text is normalized and scanned for common token, credential and email patterns when imported, saved, analysed and exported. **This is pattern matching, not complete PII detection.** Redacted material blocks skill export until you remove or parameterise it.
-- **Screen pixels and microphone audio are not redacted.** Record only appropriate material. Pause before entering secrets. Pausing cannot remove earlier footage. Delete a session to remove its saved revisions and recordings; OS backups may retain copies.
-- Analysis currently uses **text evidence only**. It does not understand the video, transcribe audio, infer terminal commands or track arbitrary desktop clicks/app switches. Use notes and the optional browser extension to supply evidence.
+- **Screen pixels, selected images and microphone audio are not redacted.** Record only appropriate material. Pause before entering secrets. Pausing cannot remove earlier footage. Delete a session to remove its saved revisions and recordings; OS backups may retain copies.
+- Analysis uses text evidence and optionally selected frames. It does not continuously understand a video, transcribe audio, infer terminal commands or track arbitrary desktop clicks/app switches. Actual vision-model accuracy has not been benchmarked. Use the local video reviewer to choose evidence; review all model suggestions.
 - No automatic replay, scheduling, cloud AI, Copilot SDK integration, API discovery, GitHub publishing from inside the app or enterprise policy management is claimed in this version.
 - Export validation proves authoring completeness, **not factual correctness, authorization or replay reliability**. Approval markers do not grant an agent permission to make changes.
 - Recording is bounded to 30 minutes / 500 MB. The app streams chunks to disk rather than holding a whole recording in memory. Save workflow revisions explicitly; closing asks before discarding unsaved work.
@@ -110,9 +118,11 @@ node src/cli.cjs export path/to/session.json ./output codex
 ## Next milestones
 
 1. Validate capture, microphone, pause/resume and packaged startup on Windows 11.
-2. Add local speech transcription and frame selection with a pre-analysis privacy review.
+2. Add local speech transcription and benchmark actual vision-model accuracy on representative tasks.
 3. Add typed condition/branch support and measured replay evaluations.
 4. Add optional provider adapters and repository publishing with an explicit data preview.
 5. Sign releases, add update delivery and test macOS/Linux native capture.
 
 MIT licence. Generated skills remain under your control; each target agent's runtime and permissions still apply.
+
+Frame files remain in the session until the whole session is deleted, including when their timeline entries are removed. Pause/seek and review carefully before selecting images for AI. For saved app recordings, use Copy a saved recording and open the copy in Review a recording.

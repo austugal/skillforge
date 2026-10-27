@@ -1,5 +1,5 @@
 'use strict';
-const {app, BrowserWindow, ipcMain, desktopCapturer, session, dialog} = require('electron');
+const {app, BrowserWindow, ipcMain, desktopCapturer, session, dialog, nativeImage} = require('electron');
 const path = require('node:path');
 const fs = require('node:fs/promises');
 const {pathToFileURL} = require('node:url');
@@ -7,6 +7,7 @@ const {randomUUID} = require('node:crypto');
 const {Store} = require('./storage.cjs');
 const {normalize} = require('./core.cjs');
 const {analyze} = require('./analyzer.cjs');
+const {saveFrame, readFrame, selectedFrames} = require('./frames.cjs');
 let win, store, sourceId = null, recording = null, closing = false;
 const page = pathToFileURL(path.join(__dirname, 'index.html')).href;
 function trusted(event) { if (event.sender !== win?.webContents || event.senderFrame !== win.webContents.mainFrame || event.senderFrame.url !== page) throw Error('Untrusted sender.'); }
@@ -43,14 +44,17 @@ app.whenReady().then(async () => {
     const result = await dialog.showOpenDialog(win, {filters: [{name: 'SkillForge or browser events', extensions: ['json']}], properties: ['openFile']});
     if (result.canceled) return null;
     if ((await fs.stat(result.filePaths[0])).size > 2_000_000) throw Error('Import limit is 2 MB.');
-    return normalize({...JSON.parse(await fs.readFile(result.filePaths[0], 'utf8')), id: `session-${randomUUID()}`});
+    const imported=normalize({...JSON.parse(await fs.readFile(result.filePaths[0], 'utf8')), id: `session-${randomUUID()}`});
+    imported.events.forEach(e=>{e.frame='';e.imageApproved=false;}); return imported;
   });
   handle('session-backup', async input => {
     const s = normalize(input); const result = await dialog.showSaveDialog(win, {defaultPath: 'workflow-session.json', filters: [{name: 'Session JSON', extensions: ['json']}]});
     if (result.canceled) return false; await fs.writeFile(result.filePath, JSON.stringify(s, null, 2), {mode: 0o600}); return true;
   });
   handle('skill-export', async (input, target) => {const result = await dialog.showOpenDialog(win, {properties: ['openDirectory', 'createDirectory'], title: 'Choose a folder for your skill bundle'}); if (result.canceled) return null; return store.export(input, target, result.filePaths[0]);});
-  handle('analyze', (input, model) => analyze(input, model));
+  handle('frame-save', (id, data) => saveFrame(store,nativeImage,id,data));
+  handle('frame-read', async (id,name) => 'data:image/jpeg;base64,' + await readFrame(store,id,name));
+  handle('analyze', async (input, model, visual) => {const s=normalize(input); return analyze(s, model, fetch, await selectedFrames(store,s,visual));});
   handle('recording-start', async id => {
     if (recording) throw Error('A recording is already active.');
     const dir = store.dir(id); await fs.mkdir(dir, {recursive: true, mode: 0o700});

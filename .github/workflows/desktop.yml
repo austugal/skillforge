@@ -1,5 +1,8 @@
 name: Build desktop packages
 on:
+  push:
+    branches: [main]
+    paths: [package.json]
   workflow_dispatch:
 permissions:
   contents: read

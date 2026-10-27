@@ -24,7 +24,8 @@
       while (seen.has(id)) id += '-x';
       seen.add(id);
       return ({
-      id, at: Math.max(0, Number(e?.at) || 0), type: ['note', 'click', 'navigation', 'checkpoint', 'pause', 'resume'].includes(e?.type) ? e.type : 'note',
+      id, at: Math.max(0, Number(e?.at) || 0), type: ['note', 'click', 'navigation', 'checkpoint', 'pause', 'resume', 'frame'].includes(e?.type) ? e.type : 'note',
+      frame: /^frame-[a-f0-9-]{36}\.jpg$/.test(e?.frame || '') ? e.frame : '', imageApproved: e?.imageApproved === true,
       text: text(e?.text, 1000), url: redact(safeUrl(str(e?.url))),
     });});
     const steps = (Array.isArray(input.steps) ? input.steps : []).slice(0, 200).map((s, i) => ({
@@ -35,7 +36,7 @@
     return {schemaVersion: 1, id: /^[a-zA-Z0-9-]{1,80}$/.test(input.id || '') ? input.id : `session-${Date.now()}`, title: text(input.title, 200),
       description: text(input.description, 1000), createdAt: str(input.createdAt, 40) || new Date().toISOString(),
       preconditions: text(input.preconditions, 4000), parameters: (Array.isArray(input.parameters) ? input.parameters : []).slice(0, 40).map(p => ({name: str(p?.name, 40).replace(/[^a-zA-Z0-9_]/g, ''), description: text(p?.description, 500)})),
-      events, steps, analysis: ['manual', 'ollama'].includes(input.analysis) ? input.analysis : 'manual', approved: input.approved === true};
+      events, steps, analysis: ['manual', 'ollama', 'ollama-vision'].includes(input.analysis) ? input.analysis : 'manual', approved: input.approved === true};
   }
   function derive(input) {
     const s = normalize(input);

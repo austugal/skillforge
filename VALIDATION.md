@@ -4,11 +4,18 @@ Automated tests cover workflow validation/export, common text redaction, URL scr
 
 ## Verified in the build environment
 
-- 11 automated domain and extension tests passed.
+- 13 automated domain and extension tests passed.
 - JavaScript syntax checks passed.
 - Electron UI integration passed using isolated temporary storage and mocked OS dialogs: authoring, review, exact export content, approval invalidation, untrusted text rendering and layout at 1,000 px width.
 - Synthetic video through the real MediaRecorder and IPC file path passed start, pause/resume and WebM disk storage. This does not prove native screen or microphone capture.
 - Production dependency audit reported zero vulnerabilities. Build tools have their own transitive dependencies.
+
+## Version 0.2 sandbox results
+
+- Actual Electron video decoding from the synthetic recording, frame extraction, JPEG persistence, default-off image consent, SRT import and editor/export integration passed.
+- Vision-request tests verify approved-image inclusion, evidence IDs, invalid-response handling, traversal rejection and the 12-frame limit using controlled model responses.
+- No live Ollama vision model was run. These tests prove request/data handling, not semantic model accuracy.
+- Native Windows capture and microphone tests remain pending.
 
 ## Native acceptance checklist (pending)
 
