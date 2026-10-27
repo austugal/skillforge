@@ -2,7 +2,7 @@
 
 **Capture the work. Keep the expertise. Export a procedure an agent can use.**
 
-SkillForge is a local-first desktop workflow recorder and skill authoring studio by Tiago Fitas. It records a selected screen or window, keeps timestamped evidence, and helps you turn that evidence into an editable, reviewed agent skill.
+SkillForge is a local-first desktop workflow recorder and skill authoring studio by austugal. It records a selected screen or window, keeps timestamped evidence, and helps you turn that evidence into an editable, reviewed agent skill.
 
 This is an independently implemented **v0.2.1 developer preview**, inspired by the record-to-skill idea in [Microsoft Skill Recorder](https://github.com/microsoft/skill-recorder). It is not a Microsoft product, a fork, or a benchmarked “10× better” claim. No upstream code is bundled.
 
