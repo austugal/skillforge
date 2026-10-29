@@ -3,7 +3,7 @@
   "version": "0.2.1",
   "description": "Local-first workflow recording and portable agent skill authoring",
   "author": "Tiago Fitas",
-  "license": "MIT",
+  "license": "UNLICENSED",
   "main": "src/main.cjs",
   "scripts": {
     "start": "electron .",
@@ -50,5 +50,6 @@
         "AppImage"
       ]
     }
-  }
+  },
+  "private": true
 }
