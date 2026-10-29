@@ -1,21 +1,25 @@
-MIT License
+SkillForge — Copyright and Rights Notice
 
-Copyright (c) 2026 Tiago Fitas
+Copyright (c) 2026 Tiago Fitas. All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+No licence is granted by this notice to use, copy, modify, distribute,
+sublicense, sell, or create derivative works of the SkillForge software
+or its accompanying documentation. Such activities require prior written
+permission from Tiago Fitas, except where permitted by applicable law,
+applicable hosting-platform terms, or a separate valid licence.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+This notice applies from the commit introducing it on 29 October 2026.
+It does not revoke permissions previously granted for versions distributed
+under the MIT License. Those versions remain subject to their original
+licence terms.
+
+Third-party components remain subject to their respective licences and
+copyright notices. This notice does not claim ownership of users' recordings,
+input data, or original content authored by users.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. TO THE EXTENT
+PERMITTED BY LAW, THE COPYRIGHT HOLDER SHALL NOT BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY ARISING FROM OR IN CONNECTION WITH THE SOFTWARE
+OR ITS USE.
