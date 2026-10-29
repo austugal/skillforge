@@ -125,6 +125,10 @@ node src/cli.cjs export path/to/session.json ./output codex
 4. Add optional provider adapters and repository publishing with an explicit data preview.
 5. Sign releases, add update delivery and test macOS/Linux native capture.
 
-MIT licence. Generated skills remain under your control; each target agent's runtime and permissions still apply.
+## Copyright and permissions
+
+Copyright (c) 2026 Tiago Fitas. **All rights reserved.** Use, modification and redistribution require prior written permission, except as stated in [LICENSE](LICENSE). The instructions above are for the owner and separately authorised users; they do not grant a licence.
+
+This notice does not revoke permissions for versions previously distributed under MIT. Third-party components retain their own licences. Generated skills remain under your control; each target agent's runtime and permissions still apply.
 
 Frame files remain in the session until the whole session is deleted, including when their timeline entries are removed. Pause/seek and review carefully before selecting images for AI. For saved app recordings, use Copy a saved recording and open the copy in Review a recording.
